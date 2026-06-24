@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import PostCard from "@/components/PostCard";
+import HiddenManager from "./HiddenManager";
 import Link from "next/link";
 
 interface Post {
@@ -18,11 +19,19 @@ interface Post {
   status: "draft" | "published" | "hidden";
 }
 
+const TABS = [
+  { key: "all", label: "All" },
+  { key: "published", label: "Published" },
+  { key: "hidden", label: "Hidden" },
+  { key: "draft", label: "Draft" },
+] as const;
+
 export default function DashboardPage() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [filter, setFilter] = useState<"all" | "published" | "hidden" | "draft">("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const fetchPosts = useCallback(async () => {
     if (!session?.user?.id) return;
@@ -46,14 +55,22 @@ export default function DashboardPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this post? This cannot be undone.")) return;
     const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
-    if (res.ok) setPosts((prev) => prev.filter((p) => p._id !== id));
+    if (res.ok) {
+      setPosts((prev) => prev.filter((p) => p._id !== id));
+    } else {
+      setError("Failed to delete post. Please try again.");
+    }
   };
 
   const handleToggleVisibility = async (id: string) => {
+    setError("");
     const res = await fetch(`/api/posts/${id}/visibility`, { method: "PATCH" });
-    if (!res.ok) return;
-    const { status } = await res.json();
-    setPosts((prev) => prev.map((p) => p._id === id ? { ...p, status } : p));
+    const json = await res.json();
+    if (!res.ok) {
+      setError(json.error ?? "Failed to update visibility.");
+      return;
+    }
+    setPosts((prev) => prev.map((p) => p._id === id ? { ...p, status: json.status } : p));
   };
 
   const counts = {
@@ -65,15 +82,14 @@ export default function DashboardPage() {
 
   const displayed = filter === "all" ? posts : posts.filter((p) => p.status === filter);
 
-  const TABS = [
-    { key: "all", label: "All" },
-    { key: "published", label: "Published" },
-    { key: "hidden", label: "Hidden" },
-    { key: "draft", label: "Draft" },
-  ] as const;
-
   return (
     <div>
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+          {error}
+        </div>
+      )}
+
       <div className="flex gap-1 mb-6 border-b border-slate-200 dark:border-slate-800">
         {TABS.map(({ key, label }) => (
           <button
@@ -92,6 +108,8 @@ export default function DashboardPage() {
 
       {loading ? (
         <div className="text-center py-16 text-slate-400">Loading…</div>
+      ) : filter === "hidden" ? (
+        <HiddenManager posts={posts} onToggle={handleToggleVisibility} />
       ) : displayed.length > 0 ? (
         <div>
           {displayed.map((post) => (
@@ -100,7 +118,7 @@ export default function DashboardPage() {
               post={post}
               showStatus
               onDelete={handleDelete}
-              onToggleVisibility={handleToggleVisibility}
+              onToggleVisibility={post.status !== "draft" ? handleToggleVisibility : undefined}
             />
           ))}
         </div>

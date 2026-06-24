@@ -14,19 +14,21 @@ export async function PATCH(_req: NextRequest, { params }: Params) {
   const { id } = await params;
   await connectDB();
 
-  const post = await Post.findById(id);
+  const post = await Post.findById(id).lean();
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   if (post.author.toString() !== session.user.id && session.user.role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Drafts can't be toggled — they must be published first
   if (post.status === "draft") {
     return NextResponse.json({ error: "Publish the post before toggling visibility" }, { status: 400 });
   }
 
-  post.status = post.status === "published" ? "hidden" : "published";
-  await post.save();
+  const newStatus = post.status === "published" ? "hidden" : "published";
 
-  return NextResponse.json({ status: post.status });
+  // Use updateOne to bypass any stale Mongoose model enum cache
+  await Post.updateOne({ _id: id }, { $set: { status: newStatus } });
+
+  return NextResponse.json({ status: newStatus });
 }
