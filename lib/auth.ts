@@ -1,9 +1,11 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { authConfig } from "@/auth.config";
 import { connectDB } from "./mongodb";
 import User from "@/models/User";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -30,21 +32,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.username = user.username;
-      }
-      return token;
-    },
-    session({ session, token }) {
-      session.user.id = token.id as string;
-      session.user.username = token.username as string;
-      return session;
-    },
-  },
-  pages: { signIn: "/login" },
-  session: { strategy: "jwt" },
-  secret: process.env.AUTH_SECRET,
 });
