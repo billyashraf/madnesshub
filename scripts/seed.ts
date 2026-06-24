@@ -220,11 +220,16 @@ async function seed() {
   await mongoose.connect(MONGODB_URI!);
   console.log("✓ Connected to MongoDB");
 
-  // Check if already seeded
+  // If admin already exists, ensure role is set and stop
   const existing = await User.findOne({ username: ADMIN.username });
   if (existing) {
-    console.log("⚠ Admin user already exists — skipping seed.");
-    console.log("  Delete the admin user from Atlas to re-seed.");
+    if (existing.role !== "admin") {
+      await User.updateOne({ _id: existing._id }, { $set: { role: "admin" } });
+      console.log("✓ Patched existing admin user — role set to 'admin'.");
+      console.log("  Sign out and back in to pick up the new role.");
+    } else {
+      console.log("✓ Admin user already exists with role 'admin' — nothing to do.");
+    }
     await mongoose.disconnect();
     return;
   }
