@@ -125,7 +125,13 @@ Accessible at `/admin` for users with `role: "admin"`.
 | Demote to user | Revert any admin back to regular user |
 | Delete any post | Admins can delete posts regardless of author |
 
-To make an existing user an admin, use the Admin Panel role toggle, or set `role: "admin"` directly in MongoDB.
+To promote an existing user to admin (e.g. if you skipped the seed or created the account before roles were added):
+
+```bash
+npm run make-admin -- <username>
+```
+
+Then sign out and back in to refresh the session. You can also use the Admin Panel role toggle to promote/demote any user after that.
 
 ---
 
