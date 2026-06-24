@@ -15,22 +15,21 @@ interface Post {
   tags: string[];
   readingTime: number;
   coverImage?: string;
-  status: "draft" | "published";
+  status: "draft" | "published" | "hidden";
 }
 
 export default function DashboardPage() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
+  const [filter, setFilter] = useState<"all" | "published" | "hidden" | "draft">("all");
   const [loading, setLoading] = useState(true);
 
   const fetchPosts = useCallback(async () => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
-      const statuses = filter === "all" ? ["published", "draft"] : [filter];
       const results = await Promise.all(
-        statuses.map((s) =>
+        (["published", "draft", "hidden"] as const).map((s) =>
           fetch(`/api/posts?authorId=${session.user.id}&status=${s}&limit=50`).then((r) => r.json())
         )
       );
@@ -40,7 +39,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.id, filter]);
+  }, [session?.user?.id]);
 
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
@@ -50,29 +49,43 @@ export default function DashboardPage() {
     if (res.ok) setPosts((prev) => prev.filter((p) => p._id !== id));
   };
 
+  const handleToggleVisibility = async (id: string) => {
+    const res = await fetch(`/api/posts/${id}/visibility`, { method: "PATCH" });
+    if (!res.ok) return;
+    const { status } = await res.json();
+    setPosts((prev) => prev.map((p) => p._id === id ? { ...p, status } : p));
+  };
+
   const counts = {
     all: posts.length,
     published: posts.filter((p) => p.status === "published").length,
+    hidden: posts.filter((p) => p.status === "hidden").length,
     draft: posts.filter((p) => p.status === "draft").length,
   };
 
   const displayed = filter === "all" ? posts : posts.filter((p) => p.status === filter);
 
+  const TABS = [
+    { key: "all", label: "All" },
+    { key: "published", label: "Published" },
+    { key: "hidden", label: "Hidden" },
+    { key: "draft", label: "Draft" },
+  ] as const;
+
   return (
     <div>
-      {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-slate-200 dark:border-slate-800">
-        {(["all", "published", "draft"] as const).map((f) => (
+        {TABS.map(({ key, label }) => (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-2.5 text-sm font-medium capitalize -mb-px border-b-2 transition-colors ${
-              filter === f
+            key={key}
+            onClick={() => setFilter(key)}
+            className={`px-4 py-2.5 text-sm font-medium -mb-px border-b-2 transition-colors ${
+              filter === key
                 ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
                 : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
-            {f} <span className="ml-1 text-xs opacity-70">({counts[f]})</span>
+            {label} <span className="ml-1 text-xs opacity-70">({counts[key]})</span>
           </button>
         ))}
       </div>
@@ -82,7 +95,13 @@ export default function DashboardPage() {
       ) : displayed.length > 0 ? (
         <div>
           {displayed.map((post) => (
-            <PostCard key={post._id} post={post} showStatus onDelete={handleDelete} />
+            <PostCard
+              key={post._id}
+              post={post}
+              showStatus
+              onDelete={handleDelete}
+              onToggleVisibility={handleToggleVisibility}
+            />
           ))}
         </div>
       ) : (

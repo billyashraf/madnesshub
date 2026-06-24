@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const tag = searchParams.get("tag") ?? undefined;
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
     const limit = Math.min(50, parseInt(searchParams.get("limit") ?? "10"));
-    const status = (searchParams.get("status") as "draft" | "published") ?? "published";
+    const status = (searchParams.get("status") as "draft" | "published" | "hidden") ?? "published";
     const authorId = searchParams.get("authorId") ?? undefined;
 
     await connectDB();

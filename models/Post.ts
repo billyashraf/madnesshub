@@ -8,7 +8,7 @@ export interface IPost extends Document {
   content: string;
   coverImage?: string;
   tags: string[];
-  status: "draft" | "published";
+  status: "draft" | "published" | "hidden";
   author: Types.ObjectId;
   readingTime: number;
   createdAt: Date;
@@ -22,7 +22,7 @@ const PostSchema = new Schema<IPost>(
     content: { type: String, required: true },
     coverImage: { type: String },
     tags: [{ type: String, lowercase: true, trim: true }],
-    status: { type: String, enum: ["draft", "published"], default: "draft" },
+    status: { type: String, enum: ["draft", "published", "hidden"], default: "draft" },
     author: { type: Schema.Types.ObjectId, ref: "User", required: true },
     readingTime: { type: Number, default: 1 },
   },
