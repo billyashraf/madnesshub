@@ -33,6 +33,18 @@ export default function Navbar() {
 
           {session ? (
             <>
+              {session.user.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className={`hidden sm:inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                    pathname.startsWith("/admin")
+                      ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  Admin
+                </Link>
+              )}
               <Link
                 href="/dashboard"
                 className={`hidden sm:inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
@@ -84,6 +96,9 @@ export default function Navbar() {
           <Link href="/search" className="block px-3 py-2 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setMenuOpen(false)}>Search</Link>
           {session ? (
             <>
+              {session.user.role === "admin" && (
+                <Link href="/admin" className="block px-3 py-2 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setMenuOpen(false)}>Admin</Link>
+              )}
               <Link href="/dashboard" className="block px-3 py-2 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setMenuOpen(false)}>Dashboard</Link>
               <button onClick={() => { signOut({ callbackUrl: "/" }); setMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">Log out</button>
             </>

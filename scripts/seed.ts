@@ -21,6 +21,7 @@ const UserSchema = new Schema(
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     bio: { type: String },
+    role: { type: String, enum: ["user", "admin"], default: "user" },
   },
   { timestamps: true }
 );
@@ -54,6 +55,7 @@ const ADMIN = {
   email: "admin@madnesshub.com",
   password: "Demo1234!",
   bio: "Creator and curator of madnesshub. Writing about AI, the web, and game design.",
+  role: "admin",
 };
 
 const POSTS = [

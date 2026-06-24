@@ -13,6 +13,7 @@ The database is pre-seeded with a demo admin account and three published posts.
 | Email    | `admin@madnesshub.com`   |
 | Password | `Demo1234!`              |
 | Username | `admin`                  |
+| Role     | `admin`                  |
 
 ### Demo posts
 
@@ -61,7 +62,7 @@ NEXTAUTH_URL=http://localhost:3000
 npm run seed
 ```
 
-Populates the admin account and three demo blog posts. Safe to skip if you want to start fresh.
+Populates the admin account (with `role: "admin"`) and three demo blog posts. Safe to skip if you want to start fresh.
 
 ### 4. Run the dev server
 
@@ -79,11 +80,16 @@ Open [http://localhost:3000](http://localhost:3000).
 madnesshub/
 ├── app/
 │   ├── (auth)/              # Login and register pages
+│   ├── admin/               # Admin panel (admin-only)
 │   ├── blog/[slug]/         # Public post page
 │   ├── dashboard/           # Authenticated writer dashboard
 │   ├── profile/[username]/  # Author profile
 │   ├── search/              # Search page
 │   └── api/                 # REST API routes
+│       ├── admin/users/     # Admin user management endpoints
+│       ├── auth/            # NextAuth handlers + register
+│       ├── posts/           # Post CRUD
+│       └── upload/          # Cover image upload
 ├── components/              # Shared UI components
 ├── lib/                     # DB connection, auth config, validators, data helpers
 ├── models/                  # Mongoose schemas (User, Post)
@@ -96,6 +102,7 @@ madnesshub/
 
 - Register, log in, log out
 - Create, edit, and delete posts
+- Upload cover images from local machine (saved to `public/uploads/`)
 - Save as draft or publish
 - Markdown editor with live preview
 - Public blog feed with search and tag filtering
@@ -103,6 +110,22 @@ madnesshub/
 - Estimated reading time
 - Light / dark mode
 - Fully responsive
+- **Admin panel** — manage users, promote/demote to admin, delete any post
+
+---
+
+## Admin Panel
+
+Accessible at `/admin` for users with `role: "admin"`.
+
+| Capability | Description |
+|---|---|
+| View all users | Name, username, email, post count, role |
+| Promote to admin | One-click role toggle per user |
+| Demote to user | Revert any admin back to regular user |
+| Delete any post | Admins can delete posts regardless of author |
+
+To make an existing user an admin, use the Admin Panel role toggle, or set `role: "admin"` directly in MongoDB.
 
 ---
 

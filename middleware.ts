@@ -5,11 +5,17 @@ import { NextResponse } from "next/server";
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
-  if (!req.auth && req.nextUrl.pathname.startsWith("/dashboard")) {
+  const { pathname } = req.nextUrl;
+
+  if (!req.auth && (pathname.startsWith("/dashboard") || pathname.startsWith("/admin"))) {
     return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  if (req.auth && pathname.startsWith("/admin") && req.auth.user?.role !== "admin") {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*"],
 };
